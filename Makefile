@@ -1,11 +1,11 @@
-PROJECT_NAME:=template-golang
+PROJECT_NAME:=
 ORG_NAME?=bartoszmajsak
 PACKAGE_NAME:=github.com/$(ORG_NAME)/$(PROJECT_NAME)
 
 PROJECT_DIR:=$(shell pwd)
 BUILD_DIR:=$(PROJECT_DIR)/build
 BINARY_DIR:=$(PROJECT_DIR)/dist
-BINARY_NAME:=binary
+BINARY_NAME:=patcher
 
 GOPATH_1:=$(shell echo ${GOPATH} | cut -d':' -f 1)
 GOBIN=$(GOPATH_1)/bin

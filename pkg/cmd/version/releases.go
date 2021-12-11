@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-github/v41/github"
 	"golang.org/x/net/context"
 
-	"github.com/bartoszmajsak/template-golang/version"
+	"github.com/bartoszmajsak/prow-patcher/version"
 )
 
 func LatestRelease() (string, error) {
@@ -16,7 +16,7 @@ func LatestRelease() (string, error) {
 
 	client := github.NewClient(&httpClient)
 	latestRelease, _, err := client.Repositories.
-		GetLatestRelease(context.Background(), "bartoszmajsak", "template-golang")
+		GetLatestRelease(context.Background(), "bartoszmajsak", "prow-patcher")
 	if err != nil {
 		return "", errors.Wrap(err, "unable to determine latest released version")
 	}

@@ -1,4 +1,4 @@
-module github.com/bartoszmajsak/template-golang
+module github.com/bartoszmajsak/prow-patcher
 
 go 1.17
 

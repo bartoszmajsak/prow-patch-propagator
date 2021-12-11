@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/bartoszmajsak/template-golang/version"
+	"github.com/bartoszmajsak/prow-patcher/version"
 )
 
 // NewCmd creates version cmd which prints version and Build details of the executed binary.
