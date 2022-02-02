@@ -16,6 +16,28 @@ import (
 )
 
 func main() {
+	// Prow plugin
+	// react on branch rename event (there's a webhook on gh for that)
+	// run embedded in the image "apply patchset from previous branch" - this is based on the assumption
+	// that patches are green
+	//
+	// ./check-conflicts --main=old_dev --dev=new_dev --skip-pr
+	/*
+		gh webhook event
+		{
+		  "action": "edited",
+		  "changes": {
+		    "default_branch": {
+		      "from": "release-2.1"
+		    }
+		  },
+		...
+		  "repository": {
+			...
+			"default_branch": "master"
+		  }
+		}
+	*/
 	rootCmd := newCmd()
 
 	rootCmd.AddCommand(version.NewCmd())
