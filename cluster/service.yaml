@@ -1,0 +1,11 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: prow-patcher
+spec:
+  selector:
+    app: prow-patcher
+  ports:
+    - port: 80
+      targetPort: 8888
+  type: NodePort

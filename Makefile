@@ -137,6 +137,17 @@ container-push--%:
 	$(call header,"Pushing container image $(image_name)")
 	$(IMG_BUILDER) push $(CONTAINER_REGISTRY)/$(CONTAINER_REPOSITORY)/$(image_name):$(image_tag)
 
+###@ K8S Deployment
+
+NAMESPACE?=prow
+WORKER_NS?=prow-workers
+CLUSTER_DIR:=$(PROJECT_DIR)/cluster
+
+.PHONY: deploy
+deploy:  ## Deploys to k8s cluster
+	@./scripts/replace.sh placeholders "$(CLUSTER_DIR)/deployment.yaml" '$${NAMESPACE}' '$(NAMESPACE)' | kubectl apply -f -
+	@kubectl apply -n "$(NAMESPACE)" -f "$(CLUSTER_DIR)/service.yaml"
+
 ##@ Setup
 
 .PHONY: tools
