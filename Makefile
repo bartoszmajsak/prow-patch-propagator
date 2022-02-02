@@ -84,6 +84,59 @@ $(BINARY_DIR)/$(BINARY_NAME): $(BINARY_DIR) $(SRCS)
 	$(call header,"Compiling... carry on!")
 	${GOBUILD} go build -o $@ .
 
+##@ Container image
+
+
+##@ Images
+
+GITUNTRACKEDCHANGES:=$(shell git status --porcelain --untracked-files=no)
+COMMIT:=$(shell git rev-parse --short HEAD)
+ifneq ($(GITUNTRACKEDCHANGES),)
+	COMMIT:=$(COMMIT)-dirty
+endif
+
+# Prefer to use podman if not explicitly set
+ifneq (, $(shell which podman))
+	IMG_BUILDER?=podman
+else
+	IMG_BUILDER?=docker
+endif
+
+CONTAINER_REGISTRY?=quay.io
+CONTAINER_REPOSITORY?=bmajsak
+
+.PHONY: container-image
+container-image: container-image--prow-patcher@latest ## Builds container images
+container-image--%: ## Builds the container image
+	$(eval image_param=$(subst container-image--,,$@))
+	$(eval image_type=$(firstword $(subst @, ,$(image_param))))
+	$(eval image_tag=$(or $(word 2,$(subst @, ,$(image_param))),latest))
+	$(eval image_name:=${image_type})
+	$(call header,"Building container image $(image_name)")
+	$(IMG_BUILDER) build \
+		--label "org.opencontainers.image.title=$(image_name)" \
+		--label "org.opencontainers.image.source=https://github.com/$(ORG)/$(REPO)" \
+		--label "org.opencontainers.image.licenses=Apache-2.0" \
+		--label "org.opencontainers.image.authors=Bartosz Majsak" \
+		--label "org.opencontainers.image.vendor=Red Hat, Inc." \
+		--label "org.opencontainers.image.revision=$(COMMIT)" \
+		--label "org.opencontainers.image.created=$(shell date -u +%F\ %T%z)" \
+		--network=host \
+		-t $(CONTAINER_REGISTRY)/$(CONTAINER_REPOSITORY)/$(image_name):$(image_tag) \
+		-f $(PROJECT_DIR)/Dockerfile $(BINARY_DIR)
+
+.PHONY: container-image-push
+container-image-push: container-image--prow-patcher@latest ## Pushes latest container images to the registry
+container-image-push: container-push--prow-patcher@latest
+
+container-push--%:
+	$(eval image_param=$(subst container-push--,,$@))
+	$(eval image_type=$(firstword $(subst @, ,$(image_param))))
+	$(eval image_tag=$(or $(word 2,$(subst @, ,$(image_param))),latest))
+	$(eval image_name:=${image_type})
+	$(call header,"Pushing container image $(image_name)")
+	$(IMG_BUILDER) push $(CONTAINER_REGISTRY)/$(CONTAINER_REPOSITORY)/$(image_name):$(image_tag)
+
 ##@ Setup
 
 .PHONY: tools
