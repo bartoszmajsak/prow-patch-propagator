@@ -18,7 +18,6 @@ linters-settings:
   depguard:
     list-type: blacklist
     packages:
-      - github.com/sirupsen/logrus
       - sigs.k8s.io/controller-runtime/pkg/log
       - sigs.k8s.io/controller-runtime/pkg/log/zap
       - sigs.k8s.io/controller-runtime/pkg/runtime/log
@@ -71,7 +70,9 @@ linters:
     - gofmt # We use goimports and when using them both leads to contradicting errors
     - gofumpt
     - gomnd
+    - gomoddirectives
     - paralleltest
+    - tagliatelle
     - wsl # FIXME https://github.com/Maistra/istio-workspace/issues/481
 
 run:

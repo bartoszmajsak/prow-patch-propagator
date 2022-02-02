@@ -1,125 +1,95 @@
 package main
 
 import (
-	"fmt"
-	"strings"
+	"flag"
+	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"emperror.dev/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"github.com/sirupsen/logrus"
+	"k8s.io/test-infra/pkg/flagutil"
+	"k8s.io/test-infra/prow/config/secret"
+	prowflagutil "k8s.io/test-infra/prow/flagutil"
+	configflagutil "k8s.io/test-infra/prow/flagutil/config"
+	pluginsflagutil "k8s.io/test-infra/prow/flagutil/plugins"
+	"k8s.io/test-infra/prow/interrupts"
+	"k8s.io/test-infra/prow/logrusutil"
+	"k8s.io/test-infra/prow/pjutil"
+	"k8s.io/test-infra/prow/pluginhelp/externalplugins"
 
-	"github.com/bartoszmajsak/prow-patcher/pkg/cmd/version"
-	"github.com/bartoszmajsak/prow-patcher/pkg/config"
-	"github.com/bartoszmajsak/prow-patcher/pkg/format"
-	v "github.com/bartoszmajsak/prow-patcher/version"
+	"github.com/bartoszmajsak/prow-patcher/pkg/patcher"
 )
 
+type options struct {
+	port                   int
+	config                 configflagutil.ConfigOptions
+	pluginsConfig          pluginsflagutil.PluginOptions
+	kubernetes             prowflagutil.KubernetesOptions
+	dryRun                 bool
+	instrumentationOptions prowflagutil.InstrumentationOptions
+	webhookSecretFile      string
+}
+
 func main() {
-	// Prow plugin
-	// react on branch rename event (there's a webhook on gh for that)
-	// run embedded in the image "apply patchset from previous branch" - this is based on the assumption
-	// that patches are green
-	//
-	// ./check-conflicts --main=old_dev --dev=new_dev --skip-pr
-	/*
-		gh webhook event
-		{
-		  "action": "edited",
-		  "changes": {
-		    "default_branch": {
-		      "from": "release-2.1"
-		    }
-		  },
-		...
-		  "repository": {
-			...
-			"default_branch": "master"
-		  }
-		}
-	*/
-	rootCmd := newCmd()
+	logrusutil.ComponentInit()
+	log := logrus.StandardLogger().WithField("plugin", patcher.PluginName)
 
-	rootCmd.AddCommand(version.NewCmd())
-
-	if err := rootCmd.Execute(); err != nil {
-		panic(err)
+	opts := gatherOptions(flag.NewFlagSet(os.Args[0], flag.ExitOnError), os.Args[1:]...)
+	if err := opts.Validate(); err != nil {
+		log.Fatalf("Invalid options: %v", err)
 	}
+
+	configAgent, err := opts.config.ConfigAgent()
+	if err != nil {
+		log.WithError(err).Fatal("Error starting config agent.")
+	}
+
+	if err = secret.Add(opts.webhookSecretFile); err != nil {
+		log.WithError(err).Fatal("Error starting secrets agent.")
+	}
+
+	prowJobClient, err := opts.kubernetes.ProwJobClient(configAgent.Config().ProwJobNamespace, opts.dryRun)
+	if err != nil {
+		log.WithError(err).Fatal("Error getting ProwJob client for infrastructure cluster.")
+	}
+
+	serv := patcher.NewServer(secret.GetTokenGenerator(opts.webhookSecretFile), configAgent, prowJobClient, log)
+
+	health := pjutil.NewHealthOnPort(opts.instrumentationOptions.HealthPort)
+	health.ServeReady()
+
+	mux := http.NewServeMux()
+	mux.Handle("/", serv)
+	externalplugins.ServeExternalPluginHelp(mux, log, patcher.HelpProvider)
+	httpServer := &http.Server{Addr: ":" + strconv.Itoa(opts.port), Handler: mux}
+	defer interrupts.WaitForGracefulShutdown()
+	interrupts.ListenAndServe(httpServer, 5*time.Second)
 }
 
-func newCmd() *cobra.Command {
-	var configFile string
-	releaseInfo := make(chan string, 1)
-
-	rootCmd := &cobra.Command{
-		Use: "cmd",
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if v.Released() {
-				go func() {
-					latestRelease, _ := version.LatestRelease()
-					if !version.IsLatestRelease(latestRelease) {
-						releaseInfo <- fmt.Sprintf("WARN: you are using %s which is not the latest release (newest is %s).\n"+
-							"Follow release notes for update info YOUR REPO", v.Version, latestRelease)
-					} else {
-						releaseInfo <- ""
-					}
-				}()
-			}
-
-			return errors.Wrap(config.SetupConfigSources(loadConfigFileName(cmd)), "failed setting config sources")
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			shouldPrintVersion, _ := cmd.Flags().GetBool("version")
-			if shouldPrintVersion {
-				version.PrintVersion()
-			} else {
-				fmt.Print(cmd.UsageString())
-			}
-
-			return nil
-		},
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			if v.Released() {
-				timer := time.NewTimer(2 * time.Second)
-				select {
-				case release := <-releaseInfo:
-					fmt.Println(release)
-				case <-timer.C:
-					// do nothing, just timeout
-				}
-			}
-			close(releaseInfo)
-
-			return nil
-		},
-	}
-
-	rootCmd.PersistentFlags().
-		StringVarP(&configFile, "config", "c", ".ike.config.yaml",
-			fmt.Sprintf("config file (supported formats: %s)", strings.Join(config.SupportedExtensions(), ", ")))
-	rootCmd.Flags().Bool("version", false, "prints the version number of ike cli")
-	rootCmd.PersistentFlags().String("help-format", "standard", "prints help in asciidoc table")
-	if err := rootCmd.PersistentFlags().MarkHidden("help-format"); err != nil {
-		fmt.Printf("failed while trying to hide a flag: %s\n", err)
-	}
-
-	format.EnhanceHelper(rootCmd)
-	format.RegisterTemplateFuncs()
-
-	return rootCmd
-}
-
-func loadConfigFileName(cmd *cobra.Command) (configFileName string, defaultConfigSource bool) {
-	configFlag := cmd.Flag("config")
-	configFileName = viper.GetString("config")
-	if configFileName == "" {
-		if configFlag.Changed {
-			configFileName = configFlag.Value.String()
-		} else {
-			configFileName = configFlag.DefValue
+func (o *options) Validate() error {
+	for _, group := range []flagutil.OptionGroup{&o.kubernetes, &o.instrumentationOptions, &o.config, &o.pluginsConfig} {
+		if err := group.Validate(o.dryRun); err != nil {
+			return errors.Wrap(err, "failed validating options.")
 		}
 	}
-	defaultConfigSource = configFlag.DefValue == configFileName
 
-	return
+	return nil
+}
+
+func gatherOptions(flagSet *flag.FlagSet, args ...string) options {
+	opts := options{config: configflagutil.ConfigOptions{ConfigPath: "/etc/config/config.yaml"}}
+	flagSet.IntVar(&opts.port, "port", 8888, "Port to listen on.")
+	flagSet.BoolVar(&opts.dryRun, "dry-run", true, "Dry run for testing. Uses API tokens but does not mutate.")
+	flagSet.StringVar(&opts.webhookSecretFile, "hmac-secret-file", "/etc/webhook/hmac", "Path to the file containing the GitHub HMAC secret.")
+	opts.pluginsConfig.PluginConfigPathDefault = "/etc/plugins/plugins.yaml"
+	for _, group := range []flagutil.OptionGroup{&opts.kubernetes, &opts.instrumentationOptions, &opts.config, &opts.pluginsConfig} {
+		group.AddFlags(flagSet)
+	}
+	if err := flagSet.Parse(args); err != nil {
+		logrus.WithError(err).Fatal("Error getting ProwJob client for infrastructure cluster.")
+	}
+
+	return opts
 }

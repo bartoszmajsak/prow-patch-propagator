@@ -1,11 +1,11 @@
-PROJECT_NAME:=
+PROJECT_NAME:=prow-patcher
 ORG_NAME?=bartoszmajsak
 PACKAGE_NAME:=github.com/$(ORG_NAME)/$(PROJECT_NAME)
 
 PROJECT_DIR:=$(shell pwd)
 BUILD_DIR:=$(PROJECT_DIR)/build
 BINARY_DIR:=$(PROJECT_DIR)/dist
-BINARY_NAME:=patcher
+BINARY_NAME:=prow-patcher
 
 GOPATH_1:=$(shell echo ${GOPATH} | cut -d':' -f 1)
 GOBIN=$(GOPATH_1)/bin
@@ -19,17 +19,12 @@ endef
 ##@ Default target (all you need - just run "make")
 .DEFAULT_GOAL:=all
 .PHONY: all
-all: deps tools format lint test compile ## Runs 'deps format lint test compile' targets
+all: deps tools format lint compile ## Runs 'deps format lint test compile' targets
 
 ##@ Build
 
 .PHONY: compile
 compile: $(BINARY_DIR)/$(BINARY_NAME) ## Compiles binaries
-
-.PHONY: test
-test: ## Runs tests
-	$(call header,"Running tests")
-	ginkgo -r -v -progress -vet=off -trace --junit-report=ginkgo-test-results.xml ${args}
 
 .PHONY: clean
 clean: ## Lets you start from clean state
@@ -45,7 +40,7 @@ deps:  ## Fetches all dependencies
 .PHONY: format
 format: ## Removes unneeded imports and formats source code
 	$(call header,"Formatting code")
-	goimports -l -w ./pkg/ ./cmd/
+	goimports -l -w -e $(SRCS)
 
 .PHONY: lint-prepare
 lint-prepare: deps
@@ -80,27 +75,21 @@ endif
 
 GOBUILD:=GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0
 RELEASE?=false
-LDFLAGS="-w -X ${PACKAGE_NAME}/version.Release=${RELEASE} -X ${PACKAGE_NAME}/version.Version=${BINARY_VERSION} -X ${PACKAGE_NAME}/version.Commit=${COMMIT} -X ${PACKAGE_NAME}/version.BuildTime=${BUILD_TIME}"
-SRCS=$(shell find ./pkg -name "*.go") $(shell find ./cmd -name "*.go") $(shell find ./version -name "*.go")
+SRCS=$(shell find . -name "*.go" -not -path "./vendor/*")
 
 $(BINARY_DIR):
 	[ -d $@ ] || mkdir -p $@
 
 $(BINARY_DIR)/$(BINARY_NAME): $(BINARY_DIR) $(SRCS)
 	$(call header,"Compiling... carry on!")
-	${GOBUILD} go build -ldflags ${LDFLAGS} -o $@ ./cmd
+	${GOBUILD} go build -o $@ .
 
 ##@ Setup
 
 .PHONY: tools
-tools: $(PROJECT_DIR)/bin/ginkgo $(PROJECT_DIR)/bin/goimports  ## Installs required go tools
+tools: $(PROJECT_DIR)/bin/goimports  ## Installs required go tools
 tools: $(PROJECT_DIR)/bin/golangci-lint
 	$(call header,"Installing required tools")
-
-
-$(PROJECT_DIR)/bin/ginkgo:
-	$(call header,"    Installing ginkgo")
-	GOBIN=$(PROJECT_DIR)/bin go install -mod=readonly github.com/onsi/ginkgo/v2/ginkgo
 
 $(PROJECT_DIR)/bin/goimports:
 	$(call header,"    Installing goimports")
