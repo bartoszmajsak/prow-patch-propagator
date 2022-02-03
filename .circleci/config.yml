@@ -2,7 +2,7 @@ version: 2.1
 
 defaults:
   docker:
-    - image: &golang-img cimg/go:1.17.4
+    - image: &golang-img cimg/go:1.17.6
   skip-for-non-code-changes: &skip-for-non-code-changes
     name: "Skip job for non-code changes"
     command: |
