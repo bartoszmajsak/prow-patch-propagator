@@ -1,24 +1,4 @@
-= Template Repository - Golang
+= What is it?
 
-Basic structure for cli-based golang projects.
+Prow plugin to carry over a patchset from one release to the other. 
 
-== Code
-
-- Folder structure
-- Sample `go.mod` configuration
-- `Makefile`
-- `.editorconfig`
-- `.gitignore`
-
-== Services
-
-- https://circleci.com/[CircleCI]
-- https://dependabot.com[Dependabot]
-
-== Setup
-
-Run `init.sh` to customize the project.
-
-== Other goodies
-
-GitHub issues / PR templates (don't forget to customize the content!)
