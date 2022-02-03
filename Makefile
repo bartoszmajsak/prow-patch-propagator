@@ -107,7 +107,7 @@ CONTAINER_REPOSITORY?=bmajsak
 
 .PHONY: container-image
 container-image: container-image--prow-patcher@latest ## Builds container images
-container-image--%: ## Builds the container image
+container-image--%: compile ## Builds the container image
 	$(eval image_param=$(subst container-image--,,$@))
 	$(eval image_type=$(firstword $(subst @, ,$(image_param))))
 	$(eval image_tag=$(or $(word 2,$(subst @, ,$(image_param))),latest))

@@ -1,6 +1,7 @@
-FROM alpine:3.15
+FROM alpine:3.15.0
 
-RUN apk --update --no-cache add ca-certificates && adduser -D prow-patcher
+RUN apk --update --no-cache add ca-certificates \
+    && adduser -D prow-patcher
 
 USER prow-patcher
 
