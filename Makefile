@@ -100,7 +100,7 @@ else
 endif
 
 CONTAINER_REGISTRY?=quay.io
-CONTAINER_REPOSITORY?=bmajsak
+CONTAINER_REPOSITORY?=maistra-dev
 
 .PHONY: container-image
 container-image: container-image--prow-patch-propagator@latest ## Builds container images
