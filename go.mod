@@ -1,4 +1,4 @@
-module github.com/bartoszmajsak/prow-patcher
+module github.com/bartoszmajsak/patch-propagator
 
 go 1.17
 

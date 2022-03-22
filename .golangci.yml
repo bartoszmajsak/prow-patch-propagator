@@ -29,7 +29,7 @@ linters-settings:
   lll:
     line-length: 180
   goimports:
-    local-prefixes: github.com/bartoszmajsak/prow-patcher
+    local-prefixes: github.com/bartoszmajsak/patch-propagator
   gocritic:
     enabled-tags:
       - performance

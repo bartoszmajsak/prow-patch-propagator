@@ -1,4 +1,13 @@
 = What is it?
 
-Prow plugin to carry over a patchset from one release to the other. 
+Prow plugin which starts prow jobs annotated with given label.
 
+== Configuration
+
+=== Deploying to cluster
+
+// assuming there's prow enabled
+
+=== Enabling for the project
+
+// paste job config

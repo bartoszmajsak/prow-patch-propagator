@@ -19,7 +19,7 @@ import (
 	"k8s.io/test-infra/prow/pjutil"
 	"k8s.io/test-infra/prow/pluginhelp/externalplugins"
 
-	"github.com/bartoszmajsak/prow-patcher/pkg/patcher"
+	"github.com/bartoszmajsak/patch-propagator/pkg/patcher"
 )
 
 type options struct {

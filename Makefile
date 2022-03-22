@@ -1,11 +1,11 @@
-PROJECT_NAME:=prow-patcher
+PROJECT_NAME:=patch-propagator
 ORG_NAME?=bartoszmajsak
 PACKAGE_NAME:=github.com/$(ORG_NAME)/$(PROJECT_NAME)
 
 PROJECT_DIR:=$(shell pwd)
 BUILD_DIR:=$(PROJECT_DIR)/build
 BINARY_DIR:=$(PROJECT_DIR)/dist
-BINARY_NAME:=prow-patcher
+BINARY_NAME:=patch-propagator
 
 GOPATH_1:=$(shell echo ${GOPATH} | cut -d':' -f 1)
 GOBIN=$(GOPATH_1)/bin
@@ -84,10 +84,7 @@ $(BINARY_DIR)/$(BINARY_NAME): $(BINARY_DIR) $(SRCS)
 	$(call header,"Compiling... carry on!")
 	${GOBUILD} go build -o $@ .
 
-##@ Container image
-
-
-##@ Images
+##@ Container images
 
 GITUNTRACKEDCHANGES:=$(shell git status --porcelain --untracked-files=no)
 COMMIT:=$(shell git rev-parse --short HEAD)
@@ -106,7 +103,7 @@ CONTAINER_REGISTRY?=quay.io
 CONTAINER_REPOSITORY?=bmajsak
 
 .PHONY: container-image
-container-image: container-image--prow-patcher@latest ## Builds container images
+container-image: container-image--prow-patch-propagator@latest ## Builds container images
 container-image--%: compile ## Builds the container image
 	$(eval image_param=$(subst container-image--,,$@))
 	$(eval image_type=$(firstword $(subst @, ,$(image_param))))
@@ -126,8 +123,8 @@ container-image--%: compile ## Builds the container image
 		-f $(PROJECT_DIR)/Dockerfile $(BINARY_DIR)
 
 .PHONY: container-image-push
-container-image-push: container-image--prow-patcher@latest ## Pushes latest container images to the registry
-container-image-push: container-push--prow-patcher@latest
+container-image-push: container-image--prow-patch-propagator@latest ## Pushes latest container images to the registry
+container-image-push: container-push--prow-patch-propagator@latest
 
 container-push--%:
 	$(eval image_param=$(subst container-push--,,$@))
@@ -145,8 +142,9 @@ CLUSTER_DIR:=$(PROJECT_DIR)/cluster
 
 .PHONY: deploy
 deploy:  ## Deploys to k8s cluster
-	@./scripts/replace.sh placeholders "$(CLUSTER_DIR)/deployment.yaml" '$${NAMESPACE}' '$(NAMESPACE)' | kubectl apply -f -
-	@kubectl apply -n "$(NAMESPACE)" -f "$(CLUSTER_DIR)/service.yaml"
+	./scripts/replace.sh placeholders "$(CLUSTER_DIR)/deployment.yaml" '$${NAMESPACE}' '$(NAMESPACE)' \
+		'$${CONTAINER_REGISTRY}' '$(CONTAINER_REGISTRY)' '$${CONTAINER_REPOSITORY}' '$(CONTAINER_REPOSITORY)'
+	@#kubectl apply -n "$(NAMESPACE)" -f "$(CLUSTER_DIR)/service.yaml"
 
 ##@ Setup
 

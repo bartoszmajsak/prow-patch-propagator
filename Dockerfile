@@ -1,10 +1,10 @@
 FROM alpine:3.15.0
 
 RUN apk --update --no-cache add ca-certificates \
-    && adduser -D prow-patcher
+    && adduser -D patch-propagator
 
-USER prow-patcher
+USER patch-propagator
 
-COPY  ./prow-patcher /usr/local/bin/prow-patcher
+COPY  ./patch-propagatorr /usr/local/bin/patch-propagator
 
-ENTRYPOINT ["/usr/local/bin/prow-patcher"]
+ENTRYPOINT ["/usr/local/bin/patch-propagator"]

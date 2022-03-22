@@ -1,10 +1,10 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: prow-patcher
+  name: prow-patch-propagator
 spec:
   selector:
-    app: prow-patcher
+    app: prow-patch-propagator
   ports:
     - port: 80
       targetPort: 8888

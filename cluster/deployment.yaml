@@ -2,25 +2,25 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: ${NAMESPACE}
-  name: prow-patcher
+  name: prow-patch-propagator
   labels:
-    app: prow-patcher
+    app: prow-patch-propagator
 spec:
   replicas: 1 # Do not scale up.
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: prow-patcher
+      app: prow-patch-propagator
   template:
     metadata:
       labels:
-        app: prow-patcher
+        app: prow-patch-propagator
     spec:
       serviceAccountName: "prow-deployer"
       containers:
-        - name: prow-patcher
-          image: quay.io/bmajsak/prow-patcher:latest
+        - name: prow-patch-propagator
+          image: ${CONTAINER_REGISTRY}/${CONTAINER_REPOSITORY}/prow-patch-propagator:latest
           args:
             - --dry-run=false
             - --config-path=/etc/config/config.yaml
