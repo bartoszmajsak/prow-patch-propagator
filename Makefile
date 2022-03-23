@@ -1,6 +1,7 @@
-PROJECT_NAME:=patch-propagator
-ORG_NAME?=bartoszmajsak
-PACKAGE_NAME:=github.com/$(ORG_NAME)/$(PROJECT_NAME)
+ORG:=$(shell git remote get-url origin | cut -d':' -f 2 | cut -d'.' -f 1 | uniq | tail -n 1 | cut -d'/' -f 1)
+PROJECT_NAME:=$(shell git remote get-url origin | cut -d':' -f 2 | cut -d'.' -f 1 | uniq | tail -n 1 | cut -d'/' -f 2)
+
+PACKAGE_NAME:=github.com/$(ORG)/$(PROJECT_NAME)
 
 PROJECT_DIR:=$(shell pwd)
 BUILD_DIR:=$(PROJECT_DIR)/build
@@ -112,7 +113,7 @@ container-image--%: compile ## Builds the container image
 	$(call header,"Building container image $(image_name)")
 	$(IMG_BUILDER) build \
 		--label "org.opencontainers.image.title=$(image_name)" \
-		--label "org.opencontainers.image.source=https://github.com/$(ORG)/$(REPO)" \
+		--label "org.opencontainers.image.source=https://github.com/$(ORG)/$(PROJECT_NAME)" \
 		--label "org.opencontainers.image.licenses=Apache-2.0" \
 		--label "org.opencontainers.image.authors=Bartosz Majsak" \
 		--label "org.opencontainers.image.vendor=Red Hat, Inc." \
