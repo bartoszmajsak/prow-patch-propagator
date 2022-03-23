@@ -5,6 +5,6 @@ RUN apk --update --no-cache add ca-certificates \
 
 USER patch-propagator
 
-COPY  ./patch-propagatorr /usr/local/bin/patch-propagator
+COPY  ./patch-propagator /usr/local/bin/patch-propagator
 
 ENTRYPOINT ["/usr/local/bin/patch-propagator"]
