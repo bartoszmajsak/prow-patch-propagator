@@ -30,6 +30,7 @@ type options struct {
 	dryRun                 bool
 	instrumentationOptions prowflagutil.InstrumentationOptions
 	webhookSecretFile      string
+	jobSelectorLabel       string
 }
 
 func main() {
@@ -55,7 +56,7 @@ func main() {
 		log.WithError(err).Fatal("Error getting ProwJob client for infrastructure cluster.")
 	}
 
-	serv := patcher.NewServer(secret.GetTokenGenerator(opts.webhookSecretFile), configAgent, prowJobClient, log)
+	serv := patcher.NewServer(secret.GetTokenGenerator(opts.webhookSecretFile), configAgent, opts.jobSelectorLabel, prowJobClient, log)
 
 	health := pjutil.NewHealthOnPort(opts.instrumentationOptions.HealthPort)
 	health.ServeReady()
@@ -83,6 +84,8 @@ func gatherOptions(flagSet *flag.FlagSet, args ...string) options {
 	flagSet.IntVar(&opts.port, "port", 8888, "Port to listen on.")
 	flagSet.BoolVar(&opts.dryRun, "dry-run", true, "Dry run for testing. Uses API tokens but does not mutate.")
 	flagSet.StringVar(&opts.webhookSecretFile, "hmac-secret-file", "/etc/webhook/hmac", "Path to the file containing the GitHub HMAC secret.")
+	flagSet.StringVar(&opts.jobSelectorLabel, "job-label", "trigger-on-default-branch-change",
+		"defines label name which, if sets to true, will make the job executed on default branch change")
 	opts.pluginsConfig.PluginConfigPathDefault = "/etc/plugins/plugins.yaml"
 	for _, group := range []flagutil.OptionGroup{&opts.kubernetes, &opts.instrumentationOptions, &opts.config, &opts.pluginsConfig} {
 		group.AddFlags(flagSet)

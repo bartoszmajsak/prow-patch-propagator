@@ -69,7 +69,7 @@ func (s *server) handleEvent(eventType, eventGUID string, payload []byte) error 
 		postsubmits := s.configAgent.Config().PostsubmitsStatic[*repoEvent.Repo.FullName]
 		for i := range postsubmits {
 			job := postsubmits[i]
-			if job.Labels["on-default-branch-change"] != "true" {
+			if job.Labels[s.jobSelectionLabel] != "true" {
 				continue
 			}
 			log.Infof("Starting %s build.", job.Name)

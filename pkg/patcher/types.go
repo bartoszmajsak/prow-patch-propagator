@@ -16,18 +16,20 @@ type prowJobClient interface {
 }
 
 type server struct {
-	tokenGenerator func() []byte
-	configAgent    *config.Agent
-	prowJobClient  prowJobClient
-	log            *logrus.Entry
+	tokenGenerator    func() []byte
+	jobSelectionLabel string
+	configAgent       *config.Agent
+	prowJobClient     prowJobClient
+	log               *logrus.Entry
 }
 
-func NewServer(tokenGenerator func() []byte, configAgent *config.Agent, prowJobClient v1.ProwJobInterface, log *logrus.Entry) *server { //nolint
+func NewServer(tokenGenerator func() []byte, configAgent *config.Agent, jobSelectionLabel string, prowJobClient v1.ProwJobInterface, log *logrus.Entry) *server { //nolint
 	return &server{
-		tokenGenerator: tokenGenerator,
-		configAgent:    configAgent,
-		prowJobClient:  prowJobClient,
-		log:            log,
+		tokenGenerator:    tokenGenerator,
+		configAgent:       configAgent,
+		jobSelectionLabel: jobSelectionLabel,
+		prowJobClient:     prowJobClient,
+		log:               log,
 	}
 }
 
