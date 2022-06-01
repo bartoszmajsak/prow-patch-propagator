@@ -144,8 +144,8 @@ CLUSTER_DIR:=$(PROJECT_DIR)/cluster
 .PHONY: deploy
 deploy:  ## Deploys to k8s cluster
 	./scripts/replace.sh placeholders "$(CLUSTER_DIR)/deployment.yaml" '$${NAMESPACE}' '$(NAMESPACE)' \
-		'$${CONTAINER_REGISTRY}' '$(CONTAINER_REGISTRY)' '$${CONTAINER_REPOSITORY}' '$(CONTAINER_REPOSITORY)'
-	@#kubectl apply -n "$(NAMESPACE)" -f "$(CLUSTER_DIR)/service.yaml"
+		'$${CONTAINER_REGISTRY}' '$(CONTAINER_REGISTRY)' '$${CONTAINER_REPOSITORY}' '$(CONTAINER_REPOSITORY)' | kubectl apply -f -
+	@kubectl apply -n "$(NAMESPACE)" -f "$(CLUSTER_DIR)/service.yaml"
 
 ##@ Setup
 
