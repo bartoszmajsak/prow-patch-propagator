@@ -93,7 +93,7 @@ func createRef(event repoChangeEvent) prowapi.Refs {
 	return prowapi.Refs{
 		Org:     orgRepo[0],
 		Repo:    orgRepo[1],
-		BaseRef: fmt.Sprintf("%s:%s", *event.Changes.DefaultBranch.From, *event.Repo.DefaultBranch),
+		BaseRef: fmt.Sprintf("%s_-_%s", *event.Changes.DefaultBranch.From, *event.Repo.DefaultBranch),
 	}
 }
 
