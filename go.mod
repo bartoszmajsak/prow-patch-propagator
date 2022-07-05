@@ -8,7 +8,7 @@ replace (
 )
 
 require (
-	emperror.dev/errors v0.8.0
+	emperror.dev/errors v0.8.1
 	github.com/google/go-github/v41 v41.0.0
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/tools v0.1.5
