@@ -10,7 +10,7 @@ replace (
 require (
 	emperror.dev/errors v0.8.1
 	github.com/google/go-github/v41 v41.0.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	golang.org/x/tools v0.1.11
 	k8s.io/apimachinery v0.21.3
 	k8s.io/test-infra v0.0.0-20211208141345-37b3589cd380
@@ -93,7 +93,7 @@ require (
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
